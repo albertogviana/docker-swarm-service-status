@@ -1,0 +1,35 @@
+version: "3.3"
+
+services:
+
+  deployment-status:
+    image: albertogviana/docker-swarm-deployment-status:1.0.0
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+         delay: 5s
+      resources:
+         reservations:
+           memory: 20M
+         limits:
+           memory: 50M
+      labels:
+        - com.df.notify=true
+        - com.df.alertName.1=memlimit
+        - com.df.alertIf.1=@service_mem_limit:0.8
+        - com.df.alertFor.1=5m
+    volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 6500:8080
+    networks:
+      - deployment-status
+      - monitor
+
+networks:
+  deployment-status:
+    external: true
+  monitor:
+    external: true
