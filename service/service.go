@@ -182,7 +182,7 @@ func (s *Service) taskStateCount(deploymentStatus DeploymentStatus, image string
 
 	for _, ds := range deploymentStatus.TaskStatus {
 
-		if ds.State == swarm.TaskStateFailed || ds.State == swarm.TaskStateRejected || ds.State == swarm.TaskStateShutdown && ds.DesiredState == swarm.TaskStateShutdown && s.getImage(ds.Image) == image {
+		if ds.State == swarm.TaskStateFailed || ds.State == swarm.TaskStateRejected && ds.DesiredState == swarm.TaskStateShutdown && s.getImage(ds.Image) == image {
 			errorTaskCount = errorTaskCount + 1
 		}
 
