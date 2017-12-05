@@ -104,7 +104,7 @@ func (s *ServiceTestSuite) Test_GetTask_ReturnError_InvalidFilter() {
 	assert.Error(s.T(), err, "Error response from daemon: {\"message\":\"Invalid filter 'invalidFilter'\"}")
 }
 
-func (s *ServiceTestSuite) Test_GetDeploymentStatus_ReturnDeploymentStatus_ServiceNotExists() {
+func (s *ServiceTestSuite) Test_GetDeploymentStatus_ReturnServiceStatus_ServiceNotExists() {
 	service := NewService(DockerHost, DockerAPIVersion, map[string]string{})
 	deploymentStatus, err := service.GetDeploymentStatus("my-service", "my-image:1.0.0")
 
@@ -123,7 +123,7 @@ func (s *ServiceTestSuite) Test_GetDeploymentStatus_ReturnDeploymentStatus_Runni
 	assert.Equal(s.T(), "The albertogviana/docker-routing-mesh:1.0.1 image was not deployed or not found in the current tasks running.", deploymentStatus.Err)
 }
 
-func (s *ServiceTestSuite) Test_GetDeploymentStatus_ReturnDeploymentStatus_ReturnDeploymentStatus() {
+func (s *ServiceTestSuite) Test_GetDeploymentStatus_ReturnServiceStatus() {
 	defer func() {
 		exec.Command("docker", "service", "scale", "docker-routing-mesh=1").Output()
 	}()
@@ -153,7 +153,7 @@ func (s *ServiceTestSuite) Test_GetDeploymentStatus_ReturnDeploymentStatus_Retur
 	assert.Nil(s.T(), deploymentStatus2.UpdateStatus)
 }
 
-func (s *ServiceTestSuite) Test_GetDeploymentStatus_ReturnDeploymentStatus_ReturnDeploymentStatusWithUpdateStatus() {
+func (s *ServiceTestSuite) Test_GetDeploymentStatus_ReturnServiceStatusWithUpdateStatus() {
 	defer func() {
 		removeTestServices()
 		createTestServices()
@@ -176,7 +176,7 @@ func (s *ServiceTestSuite) Test_GetDeploymentStatus_ReturnDeploymentStatus_Retur
 	assert.Equal(s.T(), "update completed", deploymentStatus.UpdateStatus.Message)
 }
 
-func (s *ServiceTestSuite) Test_GetDeploymentStatus_ReturnDeploymentStatus_ReturnDeploymentStatusWithUpdateStatusFailed() {
+func (s *ServiceTestSuite) Test_GetDeploymentStatus_ReturnServiceStatusWithUpdateStatusFailed() {
 	defer func() {
 		removeTestServices()
 		createTestServices()
@@ -202,6 +202,41 @@ func (s *ServiceTestSuite) Test_GetDeploymentStatus_ReturnDeploymentStatus_Retur
 	assert.True(s.T(), failedReplicas)
 	assert.NotNil(s.T(), deploymentStatus.UpdateStatus)
 	assert.Equal(s.T(), swarm.UpdateStatePaused, deploymentStatus.UpdateStatus.State)
+}
+
+func (s *ServiceTestSuite) Test_GetGetServiceStatus_ReturnServiceNotExists() {
+	service := NewService(DockerHost, DockerAPIVersion, map[string]string{})
+	deploymentStatus, err := service.GetServiceStatus("my-service")
+
+	assert.NoError(s.T(), err)
+	assert.Equal(s.T(), "The my-service service was not found in the cluster.", deploymentStatus.Err)
+}
+
+func (s *ServiceTestSuite) Test_GetServiceStatus_ReturnServiceStatus() {
+	defer func() {
+		exec.Command("docker", "service", "scale", "docker-routing-mesh=1").Output()
+	}()
+
+	service := NewService(DockerHost, DockerAPIVersion, map[string]string{})
+	serviceName := "docker-routing-mesh"
+	deploymentStatus, err := service.GetServiceStatus(serviceName)
+
+	assert.NoError(s.T(), err)
+	assert.NotNil(s.T(), deploymentStatus.ID)
+	assert.Equal(s.T(), serviceName, deploymentStatus.Name)
+	assert.Equal(s.T(), uint64(1), *deploymentStatus.Replicas)
+	assert.Equal(s.T(), 1, deploymentStatus.RunningReplicas)
+	assert.Nil(s.T(), deploymentStatus.UpdateStatus)
+
+	exec.Command("docker", "service", "scale", "docker-routing-mesh=2").Output()
+	deploymentStatus2, err := service.GetServiceStatus(serviceName)
+
+	assert.NoError(s.T(), err)
+	assert.NotNil(s.T(), deploymentStatus2.ID)
+	assert.Equal(s.T(), serviceName, deploymentStatus2.Name)
+	assert.Equal(s.T(), uint64(2), *deploymentStatus2.Replicas)
+	assert.Equal(s.T(), 2, deploymentStatus2.RunningReplicas)
+	assert.Nil(s.T(), deploymentStatus2.UpdateStatus)
 }
 
 // Util

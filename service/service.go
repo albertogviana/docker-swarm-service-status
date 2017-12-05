@@ -18,8 +18,8 @@ type Service struct {
 	DockerClient *client.Client
 }
 
-// DeploymentStatus structure
-type DeploymentStatus struct {
+// ServiceStatus structure
+type ServiceStatus struct {
 	ID              string `json:",omitempty"`
 	Name            string
 	Err             string              `json:",omitempty"`
@@ -45,7 +45,8 @@ type TaskStatus struct {
 type Services interface {
 	GetService(filter filters.Args) (swarm.Service, error)
 	GetTask(filter filters.Args) ([]swarm.Task, error)
-	GetDeploymentStatus(serviceName string, image string) (DeploymentStatus, error)
+	GetDeploymentStatus(serviceName string, image string) (ServiceStatus, error)
+	GetServiceStatus(serviceName string) (ServiceStatus, error)
 }
 
 // NewService returns a new instance of the Service structure
@@ -92,12 +93,12 @@ func (s *Service) GetTask(filter filters.Args) ([]swarm.Task, error) {
 
 // GetDeploymentStatus returns the information about a service and it verifies if the tasks are running
 // or for some reason it failed
-func (s *Service) GetDeploymentStatus(serviceName string, image string) (DeploymentStatus, error) {
+func (s *Service) GetDeploymentStatus(serviceName string, image string) (ServiceStatus, error) {
 	filterService := filters.NewArgs()
 	filterService.Add("name", serviceName)
 	swarmService, err := s.GetService(filterService)
 
-	deploymentStatus := DeploymentStatus{}
+	deploymentStatus := ServiceStatus{}
 	if err != nil {
 		return deploymentStatus, err
 	}
@@ -141,6 +142,45 @@ func (s *Service) GetDeploymentStatus(serviceName string, image string) (Deploym
 	return deploymentStatus, nil
 }
 
+// GetServiceStatus returns the information about a service and it verifies if the tasks are running
+// or for some reason it failed
+func (s *Service) GetServiceStatus(serviceName string) (ServiceStatus, error) {
+	filterService := filters.NewArgs()
+	filterService.Add("name", serviceName)
+	swarmService, err := s.GetService(filterService)
+
+	serviceStatus := ServiceStatus{}
+	if err != nil {
+		return serviceStatus, err
+	}
+
+	serviceStatus.Name = serviceName
+
+	if swarmService.ID == "" {
+		serviceStatus.Err = fmt.Sprintf("The %s service was not found in the cluster.", serviceName)
+		return serviceStatus, nil
+	}
+
+	filterTask := filters.NewArgs()
+	filterTask.Add("service", swarmService.ID)
+	filterTask.Add("desired-state", "running")
+
+	swarmTask, err := s.GetTask(filterTask)
+	if err != nil {
+		return serviceStatus, err
+	}
+
+	serviceStatus.ID = swarmService.ID
+
+	serviceStatus.Replicas = swarmService.Spec.Mode.Replicated.Replicas
+	serviceStatus.TaskStatus = s.parseTaskState(swarmTask)
+	serviceStatus.UpdateStatus = swarmService.UpdateStatus
+
+	serviceStatus.RunningReplicas, serviceStatus.FailedReplicas = s.taskStateCount(serviceStatus, "")
+
+	return serviceStatus, nil
+}
+
 func (s *Service) parseTaskState(swarmTask []swarm.Task) []TaskStatus {
 	taskStatus := []TaskStatus{}
 	for _, task := range swarmTask {
@@ -176,17 +216,24 @@ func (s *Service) getImage(image string) string {
 	return currentImage[0]
 }
 
-func (s *Service) taskStateCount(deploymentStatus DeploymentStatus, image string) (int, int) {
+func (s *Service) taskStateCount(serviceStatus ServiceStatus, image string) (int, int) {
 	runningTaskCount := 0
 	errorTaskCount := 0
 
-	for _, ds := range deploymentStatus.TaskStatus {
-
+	for _, ds := range serviceStatus.TaskStatus {
 		if ds.State == swarm.TaskStateFailed || ds.State == swarm.TaskStateRejected && ds.DesiredState == swarm.TaskStateShutdown && s.getImage(ds.Image) == image {
 			errorTaskCount = errorTaskCount + 1
 		}
 
+		if ds.State == swarm.TaskStateFailed || ds.State == swarm.TaskStateRejected && ds.DesiredState == swarm.TaskStateShutdown && image == "" {
+			errorTaskCount = errorTaskCount + 1
+		}
+
 		if ds.State == swarm.TaskStateRunning && ds.DesiredState == swarm.TaskStateRunning && s.getImage(ds.Image) == image {
+			runningTaskCount = runningTaskCount + 1
+		}
+
+		if ds.State == swarm.TaskStateRunning && ds.DesiredState == swarm.TaskStateRunning && image == "" {
 			runningTaskCount = runningTaskCount + 1
 		}
 	}

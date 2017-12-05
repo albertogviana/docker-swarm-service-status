@@ -17,6 +17,11 @@ type Server struct {
 	Service service.Services
 }
 
+//Response message
+type Response struct {
+	Status string
+}
+
 // NewServer returns a new instance of the Server structure
 func NewServer(service service.Services) *Server {
 	return &Server{
@@ -26,21 +31,23 @@ func NewServer(service service.Services) *Server {
 
 // Run bootstrap the server
 func (s *Server) Run() {
-	log.Println("Docker Deployment Status Starting")
+	log.Println("Docker Service Status Starting")
 
 	r := mux.NewRouter().StrictSlash(true).UseEncodedPath()
-	deploymentStatusHandler(r, s)
+	router(r, s)
 
-	log.Println("Docker Deployment Status Started")
+	log.Println("Docker Service Status Started")
 	log.Fatal(http.ListenAndServe("0.0.0.0:8080", r))
 }
 
-func deploymentStatusHandler(r *mux.Router, s *Server) {
-	r.HandleFunc("/v1/docker-swarm-deployment-status/{service}/{image}", s.DeploymentStatus).Methods("GET")
+func router(r *mux.Router, s *Server) {
+	r.HandleFunc("/v1/docker-swarm-service-status/service-status/{service}", s.ServiceStatusHandler).Methods("GET")
+	r.HandleFunc("/v1/docker-swarm-service-status/deployment-status/{service}/{image}", s.DeploymentStatusHandler).Methods("GET")
+	r.HandleFunc("/v1/docker-swarm-service-status/health", s.HealthHandler).Methods("GET")
 }
 
-// DeploymentStatus returns the current state of the service
-func (s *Server) DeploymentStatus(w http.ResponseWriter, r *http.Request) {
+// DeploymentStatusHandler returns the current state of the service
+func (s *Server) DeploymentStatusHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(r)
 
@@ -65,5 +72,33 @@ func (s *Server) DeploymentStatus(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	js, _ := json.Marshal(status)
+	w.Write(js)
+}
+
+// ServiceStatusHandler returns the current state of the service
+func (s *Server) ServiceStatusHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	vars := mux.Vars(r)
+
+	serviceName := vars["service"]
+
+	status, err := s.Service.GetServiceStatus(serviceName)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		io.WriteString(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	js, _ := json.Marshal(status)
+	w.Write(js)
+}
+
+// HealthHandler is used for health checks
+func (s *Server) HealthHandler(w http.ResponseWriter, req *http.Request) {
+	js, _ := json.Marshal(Response{Status: "OK"})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	w.Write(js)
 }
