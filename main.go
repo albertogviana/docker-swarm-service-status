@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/albertogviana/docker-swarm-deployment-status/server"
-	"github.com/albertogviana/docker-swarm-deployment-status/service"
+	"github.com/albertogviana/docker-swarm-service-status/server"
+	"github.com/albertogviana/docker-swarm-service-status/service"
 )
 
 func main() {
@@ -15,7 +15,7 @@ func main() {
 	}
 
 	dockerAPIVersion := "v1.33"
-	defaultHeaders := map[string]string{"User-Agent": "docker-swarm-deployment-status-cli-1.0"}
+	defaultHeaders := map[string]string{"User-Agent": "docker-swarm-service-status-cli-1.0"}
 
 	service := service.NewService(dockerHost, dockerAPIVersion, defaultHeaders)
 	server := server.NewServer(service)

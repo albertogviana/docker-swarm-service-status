@@ -15,6 +15,6 @@ COPY --from=build /go/src/github.com/albertogviana/docker-swarm-service-status/d
 EXPOSE 8080
 CMD ["docker-swarm-service-status"]
 
-HEALTHCHECK --interval=5s --start-period=3s --timeout=5s CMD wget -qO- "http://localhost:8080/v1/docker-swarm-deployment-status/health"
+HEALTHCHECK --interval=5s --start-period=3s --timeout=5s CMD wget -qO- "http://localhost:8080/v1/docker-swarm-service-status/health"
 
 RUN chmod +x /usr/local/bin/docker-swarm-service-status

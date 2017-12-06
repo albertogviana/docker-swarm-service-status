@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/albertogviana/docker-swarm-deployment-status/service"
+	"github.com/albertogviana/docker-swarm-service-status/service"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/gorilla/mux"

@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/albertogviana/docker-swarm-deployment-status/service"
+	"github.com/albertogviana/docker-swarm-service-status/service"
 	"github.com/gorilla/mux"
 )
 
