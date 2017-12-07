@@ -11,6 +11,20 @@ The idea behind of this project was to provide an easy way to get the service de
 - [ ] Add Prometheus metrics
 - [ ] Improve documentation  
 
+## Deploy the project on Docker Swarm
+
+First you need to create the network
+```
+docker network create -d overlay service-status
+```
+
+Deploying using stack
+```
+docker stack deploy -c stack/service-status.yml service-status
+```
+
+The service expose the port `8080`.
+
 ## Endpoint
 
 ### Deployment Status (/v1/docker-swarm-service-status/deployment-status/{service}/{image})
