@@ -1,3 +1,4 @@
 .cover/*
 */.cover/*
 *.out
+docker-swarm-service-status
