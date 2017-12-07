@@ -1,6 +1,6 @@
 # docker-swarm-service-status
-[![](https://images.microbadger.com/badges/image/albertogviana/docker-swarm-service-status.svg)](https://microbadger.com/images/albertogviana/docker-swarm-service-status "Get your own image badge on microbadger.com")
-[![](https://images.microbadger.com/badges/version/albertogviana/docker-swarm-service-status.svg)](https://microbadger.com/images/albertogviana/docker-swarm-service-status "Get your own version badge on microbadger.com")
+[![](https://images.microbadger.com/badges/image/albertogviana/docker-swarm-service-status.svg)](https://microbadger.com/images/albertogviana/docker-swarm-service-status)
+[![](https://images.microbadger.com/badges/version/albertogviana/docker-swarm-service-status.svg)](https://microbadger.com/images/albertogviana/docker-swarm-service-status)
 [![Go Report Card](https://goreportcard.com/badge/github.com/albertogviana/docker-swarm-service-status)](https://goreportcard.com/report/github.com/albertogviana/docker-swarm-service-status)
 
 ## Motivation
