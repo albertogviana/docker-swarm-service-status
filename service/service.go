@@ -222,19 +222,11 @@ func (s *Service) taskStateCount(serviceStatus ServiceStatus, image string) (int
 
 	for _, ds := range serviceStatus.TaskStatus {
 
-		if (ds.State == swarm.TaskStateFailed || ds.State == swarm.TaskStateRejected) && ds.DesiredState == swarm.TaskStateShutdown && s.getImage(ds.Image) == image {
+		if (ds.State == swarm.TaskStateFailed || ds.State == swarm.TaskStateRejected) && ds.DesiredState == swarm.TaskStateShutdown && (s.getImage(ds.Image) == image || image == "") {
 			errorTaskCount = errorTaskCount + 1
 		}
 
-		if (ds.State == swarm.TaskStateFailed || ds.State == swarm.TaskStateRejected) && ds.DesiredState == swarm.TaskStateShutdown && image == "" {
-			errorTaskCount = errorTaskCount + 1
-		}
-
-		if (ds.State == swarm.TaskStateRunning && ds.DesiredState == swarm.TaskStateRunning) && s.getImage(ds.Image) == image {
-			runningTaskCount = runningTaskCount + 1
-		}
-
-		if ds.State == swarm.TaskStateRunning && ds.DesiredState == swarm.TaskStateRunning && image == "" {
+		if ds.State == swarm.TaskStateRunning && ds.DesiredState == swarm.TaskStateRunning && (s.getImage(ds.Image) == image || image == "") {
 			runningTaskCount = runningTaskCount + 1
 		}
 	}
