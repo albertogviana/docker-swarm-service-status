@@ -18,7 +18,7 @@ First you need to create the network
 docker network create -d overlay service-status
 ```
 
-Deploying using stack
+To deploy the service we are going to use `docker stack` command
 ```
 docker stack deploy -c stack/service-status.yml service-status
 ```
