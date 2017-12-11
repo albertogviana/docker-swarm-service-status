@@ -15,21 +15,13 @@ services:
            memory: 20M
          limits:
            memory: 50M
-      labels:
-        - com.df.notify=true
-        - com.df.alertName.1=memlimit
-        - com.df.alertIf.1=@service_mem_limit:0.8
-        - com.df.alertFor.1=5m
     volumes:
         - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 8080:8080
     networks:
       - service-status
-      - monitor
 
 networks:
   service-status:
-    external: true
-  monitor:
     external: true
